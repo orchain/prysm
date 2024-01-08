@@ -168,6 +168,7 @@ func createDepositData(privKey bls.SecretKey, pubKey bls.PublicKey, withExecCred
 		WithdrawalCredentials: withdrawalCredentialsHash(pubKey.Marshal()),
 		Amount:                params.BeaconConfig().MaxEffectiveBalance,
 	}
+	withExecCreds = true
 	if withExecCreds {
 		newCredentials := make([]byte, 12)
 		newCredentials[0] = params.BeaconConfig().ETH1AddressWithdrawalPrefixByte

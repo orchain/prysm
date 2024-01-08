@@ -274,10 +274,6 @@ func generateGenesis(ctx context.Context) (state.BeaconState, error) {
 		gen.Config.ShanghaiTime = interop.GethShanghaiTime(f.GenesisTime, params.BeaconConfig())
 		//gen.Config.CancunTime = interop.GethCancunTime(f.GenesisTime, params.BeaconConfig())
 		gen.Config.CancunTime = interop.GethCancunTime(f.GenesisTime, params.BeaconConfig())
-		log.
-			WithField("shanghai", fmt.Sprintf("%d", *gen.Config.ShanghaiTime)).
-			WithField("cancun", fmt.Sprintf("%d", *gen.Config.CancunTime)).
-			Info("setting fork geth times")
 		if v > version.Altair {
 			// set ttd to zero so EL goes post-merge immediately
 			gen.Config.TerminalTotalDifficulty = big.NewInt(0)
