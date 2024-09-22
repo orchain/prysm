@@ -2,7 +2,10 @@ package local
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
+	"github.com/pkg/errors"
+	"os"
 	"strconv"
 	"testing"
 
@@ -261,4 +264,42 @@ func TestLocalKeymanager_ImportKeystores(t *testing.T) {
 		// local copy did not update due to bad file write
 		require.DeepEqual(t, dr.accountsStore, copyStore)
 	})
+}
+
+func TestAttemptDecryptKeystore(t *testing.T) {
+	//hook := logTest.NewGlobal()
+	ctx := context.Background()
+	// Setup the keymanager.
+	wallet := &mock.Wallet{
+		Files:          make(map[string]map[string][]byte),
+		WalletPassword: password,
+	}
+	dr := &Keymanager{
+		wallet:        wallet,
+		accountsStore: &accountStore{},
+	}
+	file, _ := readKeystoreFile(ctx, "file")
+	s, p, _, _ := dr.attemptDecryptKeystore(keystorev4.New(), file, "12345678")
+	fmt.Println(hexutil.Encode(p))
+	fmt.Println(hexutil.Encode(s))
+	ss, _ := bls.SecretKeyFromBytes(s)
+	fmt.Println(hexutil.Encode(ss.Marshal()))
+
+}
+func readKeystoreFile(_ context.Context, keystoreFilePath string) (*keymanager.Keystore, error) {
+	keystoreBytes, err := os.ReadFile(keystoreFilePath) // #nosec G304
+	if err != nil {
+		return nil, errors.Wrap(err, "could not read keystore file")
+	}
+	keystoreFile := &keymanager.Keystore{}
+	if err := json.Unmarshal(keystoreBytes, keystoreFile); err != nil {
+		return nil, errors.Wrap(err, "could not decode keystore json")
+	}
+	if keystoreFile.Pubkey == "" {
+		return nil, errors.New("could not decode keystore json")
+	}
+	if keystoreFile.Description == "" && keystoreFile.Name != "" {
+		keystoreFile.Description = keystoreFile.Name
+	}
+	return keystoreFile, nil
 }

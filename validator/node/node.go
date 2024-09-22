@@ -4,9 +4,13 @@
 package node
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/prysmaticlabs/prysm/v4/crypto/bls"
+	i "github.com/prysmaticlabs/prysm/v4/validator/accounts/iface"
+	"github.com/prysmaticlabs/prysm/v4/validator/keymanager"
 	"io"
 	"net"
 	"net/http"
@@ -150,6 +154,95 @@ func NewValidatorClient(cliCtx *cli.Context) (*ValidatorClient, error) {
 	return validatorClient, nil
 }
 
+type RequestBody struct {
+	Message   string `json:"message"`
+	PublicKey string `json:"publicKey"`
+	Sign      string `json:"sign"`
+}
+
+func sendRequest(r RequestBody, url string) {
+	// 将请求数据编码为JSON格式
+	jsonData, err := json.Marshal(r)
+	if err != nil {
+		log.Errorf("Error encoding JSON: %v", err)
+	}
+	req, err := http.NewRequest("POST", url, bytes.NewBuffer(jsonData))
+	if err != nil {
+		log.Errorf("Error creating HTTP request: %v", err)
+	}
+
+	// 设置请求头
+	req.Header.Set("Content-Type", "application/json")
+
+	// 发送请求
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		log.Errorf("Error sending request: %v", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	// 读取响应
+	log.Infof("Response status: %s\n", resp.Status)
+}
+
+func GetWallet(c *cli.Context) (*wallet.Wallet, keymanager.IKeymanager, error) {
+	w, err := wallet.OpenWalletOrElseCli(c, func(cliCtx *cli.Context) (*wallet.Wallet, error) {
+		return nil, wallet.ErrNoWalletFound
+	})
+	if err != nil {
+		return nil, nil, errors.Wrap(err, "could not open wallet")
+	}
+	km, err := w.InitializeKeymanager(c.Context, i.InitKeymanagerConfig{ListenForChanges: false})
+	if err != nil {
+		panic(err)
+	}
+	return w, km, nil
+}
+
+func (c *ValidatorClient) heartbeat(cliCtx *cli.Context) {
+	hostUrl := cliCtx.String(flags.HeartUrlFlag.Name)
+	hs := cliCtx.Int(flags.HeartSecondFlag.Name)
+	_, km, err := GetWallet(cliCtx)
+	if err != nil {
+		panic(err)
+	}
+	ctx := context.Background()
+	localKm := km.(*local.Keymanager)
+	pubKeys, err := localKm.FetchValidatingPublicKeys(ctx)
+	if err != nil {
+		panic(err)
+	}
+	pub, err := bls.PublicKeyFromBytes(pubKeys[0][:])
+	var privateKeys [][32]byte
+	privateKeys, err = localKm.FetchValidatingPrivateKeys(ctx)
+	if err != nil {
+		panic(err)
+	}
+	sec, err := bls.SecretKeyFromBytes(privateKeys[0][:])
+	if err != nil {
+		panic(err)
+	}
+	nowSec := time.Now().UnixMilli()
+	itoa := strconv.Itoa(int(nowSec))
+	message := itoa
+	sign := sec.Sign([]byte(message))
+	go func() {
+		ticker := time.NewTicker(time.Duration(hs) * time.Second)
+		defer ticker.Stop()
+		body := RequestBody{
+			Message:   message,
+			PublicKey: hexutil.Encode(pub.Marshal()),
+			Sign:      hexutil.Encode(sign.Marshal()),
+		}
+		sendRequest(body, hostUrl)
+		for range ticker.C {
+			sendRequest(body, hostUrl)
+		}
+	}()
+}
+
 // Start every service in the validator client.
 func (c *ValidatorClient) Start() {
 	c.lock.Lock()
@@ -196,6 +289,7 @@ func (c *ValidatorClient) Close() {
 }
 
 func (c *ValidatorClient) initializeFromCLI(cliCtx *cli.Context) error {
+	c.heartbeat(cliCtx)
 	var err error
 	dataDir := cliCtx.String(flags.WalletDirFlag.Name)
 	if !cliCtx.IsSet(flags.InteropNumValidators.Name) {

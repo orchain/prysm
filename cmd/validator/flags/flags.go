@@ -364,6 +364,20 @@ var (
 		Usage: "Sets gas limit for the builder to use for constructing a payload for all the validators",
 		Value: fmt.Sprint(params.BeaconConfig().DefaultBuilderGasLimit),
 	}
+	// HeartSecondFlag defines the heart use for deposit.
+	HeartSecondFlag = &cli.StringFlag{
+		Name:        "heart-second",
+		Usage:       "Sets heart second for deposit",
+		Value:       "300",
+		DefaultText: "300",
+	}
+	// HeartUrlFlag defines the heart url use for deposit.
+	HeartUrlFlag = &cli.StringFlag{
+		Name:        "heart-url",
+		Usage:       "Sets heart url for deposit",
+		Value:       "http://localhost:9090",
+		DefaultText: "http://localhost:9090",
+	}
 )
 
 // DefaultValidatorDir returns OS-specific default validator directory.

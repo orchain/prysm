@@ -2,7 +2,12 @@ package checkpointsync
 
 import (
 	"context"
+	"fmt"
+	"github.com/prysmaticlabs/prysm/v4/cmd/flags"
+	"github.com/prysmaticlabs/prysm/v4/config/params"
+	"github.com/prysmaticlabs/prysm/v4/runtime/version"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/prysmaticlabs/prysm/v4/api/client"
@@ -15,7 +20,22 @@ var downloadFlags = struct {
 	BeaconNodeHost string
 	Timeout        time.Duration
 }{}
-
+var generateGenesisStateFlags = struct {
+	DepositJsonFile    string
+	ChainConfigFile    string
+	ConfigName         string
+	NumValidators      uint64
+	GenesisTime        uint64
+	GenesisTimeDelay   uint64
+	OutputSSZ          string
+	OutputJSON         string
+	OutputYaml         string
+	ForkName           string
+	OverrideEth1Data   bool
+	ExecutionEndpoint  string
+	GethGenesisJsonIn  string
+	GethGenesisJsonOut string
+}{}
 var downloadCmd = &cli.Command{
 	Name:    "download",
 	Aliases: []string{"dl"},
@@ -39,13 +59,53 @@ var downloadCmd = &cli.Command{
 			Destination: &downloadFlags.Timeout,
 			Value:       time.Minute * 4,
 		},
+		&cli.StringFlag{
+			Name:        "chain-config-file",
+			Destination: &generateGenesisStateFlags.ChainConfigFile,
+			Usage:       "The path to a YAML file with chain config values",
+		},
+		&cli.StringFlag{
+			Name:        "config-name",
+			Usage:       "Config kind to be used for generating the genesis state. Default: mainnet. Options include mainnet, interop, minimal, prater, sepolia. --chain-config-file will override this flag.",
+			Destination: &generateGenesisStateFlags.ConfigName,
+			Value:       params.MainnetName,
+		},
+		flags.EnumValue{
+			Name:        "fork",
+			Usage:       fmt.Sprintf("Name of the BeaconState schema to use in output encoding [%s]", strings.Join(versionNames(), ",")),
+			Enum:        versionNames(),
+			Value:       versionNames()[0],
+			Destination: &generateGenesisStateFlags.ForkName,
+		}.GenericFlag(),
 	},
+}
+
+func versionNames() []string {
+	enum := version.All()
+	names := make([]string, len(enum))
+	for i := range enum {
+		names[i] = version.String(enum[i])
+	}
+	return names
+}
+
+func setGlobalParams() error {
+	chainConfigFile := generateGenesisStateFlags.ChainConfigFile
+	if chainConfigFile != "" {
+		log.Infof("Specified a chain config file: %s", chainConfigFile)
+		return params.LoadChainConfigFile(chainConfigFile, nil)
+	}
+	cfg, err := params.ByName(generateGenesisStateFlags.ConfigName)
+	if err != nil {
+		return fmt.Errorf("unable to find config using name %s: %v", generateGenesisStateFlags.ConfigName, err)
+	}
+	return params.SetActive(cfg.Copy())
 }
 
 func cliActionDownload(_ *cli.Context) error {
 	ctx := context.Background()
 	f := downloadFlags
-
+	setGlobalParams()
 	opts := []client.ClientOpt{client.WithTimeout(f.Timeout)}
 	client, err := beacon.NewClient(downloadFlags.BeaconNodeHost, opts...)
 	if err != nil {
