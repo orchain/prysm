@@ -2,8 +2,6 @@ package keystore
 
 import (
 	"bytes"
-	"fmt"
-	"github.com/ethereum/go-ethereum/common/hexutil"
 	"os"
 	"path"
 	"testing"
@@ -16,7 +14,7 @@ import (
 )
 
 func TestStoreAndGetKey(t *testing.T) {
-	tempDir := path.Join(".", "keystore", "file")
+	tempDir := path.Join(t.TempDir(), "keystore", "file")
 	ks := &Keystore{
 		keysDirPath: tempDir,
 		scryptN:     LightScryptN,
@@ -31,19 +29,7 @@ func TestStoreAndGetKey(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, true, bytes.Equal(decryptedKey.SecretKey.Marshal(), key.SecretKey.Marshal()))
 }
-func TestGetKey(t *testing.T) {
-	tempDir := path.Join(".", "keystore", "file")
-	ks := &Keystore{
-		keysDirPath: tempDir,
-		scryptN:     LightScryptN,
-		scryptP:     LightScryptP,
-	}
 
-	decryptedKey, err := ks.GetKey(tempDir, "12345678")
-	require.NoError(t, err)
-	fmt.Println(hexutil.Encode(decryptedKey.SecretKey.PublicKey().Marshal()))
-	fmt.Println(hexutil.Encode(decryptedKey.SecretKey.Marshal()))
-}
 func TestStoreAndGetKeys(t *testing.T) {
 	tempDir := path.Join(t.TempDir(), "keystore")
 	ks := &Keystore{
