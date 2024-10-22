@@ -330,6 +330,7 @@ func (q *blocksQueue) onDataReceivedEvent(ctx context.Context) eventHandlerFn {
 				}
 			}
 			if errors.Is(response.err, beaconsync.ErrInvalidFetchedData) {
+				log.Errorf("21 Bad Peer Reason")
 				// Peer returned invalid data, penalize.
 				q.blocksFetcher.p2p.Peers().Scorers().BadResponsesScorer().Increment(m.pid)
 				log.WithField("pid", response.pid).Debug("Peer is penalized for invalid blocks")

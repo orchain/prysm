@@ -100,10 +100,12 @@ func (s *Service) sendMetaDataRequest(ctx context.Context, id peer.ID) (metadata
 	defer closeStream(stream, log)
 	code, errMsg, err := ReadStatusCode(stream, s.cfg.p2p.Encoding())
 	if err != nil {
+		log.WithError(err).Errorf("10 Bad Peer Reason")
 		s.cfg.p2p.Peers().Scorers().BadResponsesScorer().Increment(stream.Conn().RemotePeer())
 		return nil, err
 	}
 	if code != 0 {
+		log.Errorf("11 Bad Peer Reason %v", code)
 		s.cfg.p2p.Peers().Scorers().BadResponsesScorer().Increment(stream.Conn().RemotePeer())
 		return nil, errors.New(errMsg)
 	}
@@ -128,6 +130,7 @@ func (s *Service) sendMetaDataRequest(ctx context.Context, id peer.ID) (metadata
 		return nil, err
 	}
 	if err := s.cfg.p2p.Encoding().DecodeWithMaxLength(stream, msg); err != nil {
+		log.WithError(err).Errorf("12 Bad Peer Reason")
 		s.cfg.p2p.Peers().Scorers().BadResponsesScorer().Increment(stream.Conn().RemotePeer())
 		return nil, err
 	}

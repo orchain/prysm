@@ -445,6 +445,7 @@ func (s *Service) connectWithPeer(ctx context.Context, info peer.AddrInfo) error
 	ctx, cancel := context.WithTimeout(ctx, maxDialTimeout)
 	defer cancel()
 	if err := s.host.Connect(ctx, info); err != nil {
+		log.WithError(err).Errorf("1 Bad Peer Reason %s", info.String())
 		s.Peers().Scorers().BadResponsesScorer().Increment(info.ID)
 		return err
 	}

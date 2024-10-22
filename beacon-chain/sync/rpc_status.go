@@ -59,6 +59,7 @@ func (s *Service) maintainPeerStatuses() {
 				if prysmTime.Now().After(lastUpdated.Add(interval)) {
 					if err := s.reValidatePeer(s.ctx, id); err != nil {
 						log.WithField("peer", id).WithError(err).Debug("Could not revalidate peer")
+						log.Errorf("16 Bad Peer Reason")
 						s.cfg.p2p.Peers().Scorers().BadResponsesScorer().Increment(id)
 					}
 				}
@@ -152,16 +153,19 @@ func (s *Service) sendRPCStatusRequest(ctx context.Context, id peer.ID) error {
 
 	code, errMsg, err := ReadStatusCode(stream, s.cfg.p2p.Encoding())
 	if err != nil {
+		log.Errorf("17 Bad Peer Reason")
 		s.cfg.p2p.Peers().Scorers().BadResponsesScorer().Increment(stream.Conn().RemotePeer())
 		return err
 	}
 
 	if code != 0 {
+		log.Errorf("18 Bad Peer Reason")
 		s.cfg.p2p.Peers().Scorers().BadResponsesScorer().Increment(id)
 		return errors.New(errMsg)
 	}
 	msg := &pb.Status{}
 	if err := s.cfg.p2p.Encoding().DecodeWithMaxLength(stream, msg); err != nil {
+		log.Errorf("19 Bad Peer Reason")
 		s.cfg.p2p.Peers().Scorers().BadResponsesScorer().Increment(stream.Conn().RemotePeer())
 		return err
 	}
@@ -228,6 +232,7 @@ func (s *Service) statusRPCHandler(ctx context.Context, msg interface{}, stream 
 			return nil
 		default:
 			respCode = responseCodeInvalidRequest
+			log.Errorf("20 Bad Peer Reason")
 			s.cfg.p2p.Peers().Scorers().BadResponsesScorer().Increment(remotePeer)
 		}
 
