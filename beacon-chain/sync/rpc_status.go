@@ -172,6 +172,9 @@ func (s *Service) sendRPCStatusRequest(ctx context.Context, id peer.ID) error {
 
 	// If validation fails, validation error is logged, and peer status scorer will mark peer as bad.
 	err = s.validateStatusMessage(ctx, msg)
+	if err != nil {
+		log.WithError(err).Errorf("Bad Peer Reason SetPeerStatus")
+	}
 	s.cfg.p2p.Peers().Scorers().PeerStatusScorer().SetPeerStatus(id, msg, err)
 	if s.cfg.p2p.Peers().IsBad(id) {
 		s.disconnectBadPeer(s.ctx, id)
