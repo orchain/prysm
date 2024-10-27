@@ -153,7 +153,7 @@ func (s *Service) sendRPCStatusRequest(ctx context.Context, id peer.ID) error {
 
 	code, errMsg, err := ReadStatusCode(stream, s.cfg.p2p.Encoding())
 	if err != nil {
-		log.Errorf("17 Bad Peer Reason")
+		log.WithError(err).Errorf("17 Bad Peer Reason %v %v", s.cfg.p2p.Encoding(), stream.Conn().RemotePeer())
 		s.cfg.p2p.Peers().Scorers().BadResponsesScorer().Increment(stream.Conn().RemotePeer())
 		return err
 	}
