@@ -76,8 +76,10 @@ func (s *Service) FindPeersWithSubnet(ctx context.Context, topic string,
 			return false, errors.Errorf("unable to find requisite number of peers for topic %s - "+
 				"only %d out of %d peers were able to be found", topic, currNum, threshold)
 		}
+		log.Tracef("find topic %s", topic)
 		nodes := enode.ReadNodes(iterator, int(params.BeaconNetworkConfig().MinimumPeersInSubnetSearch))
 		for _, node := range nodes {
+			log.Tracef("topic %s find nodes %s", topic, node.IP().String())
 			info, _, err := convertToAddrInfo(node)
 			if err != nil {
 				continue
@@ -90,8 +92,10 @@ func (s *Service) FindPeersWithSubnet(ctx context.Context, topic string,
 				wg.Done()
 			}()
 		}
+		log.Tracef("find topic ok %s", topic)
 		// Wait for all dials to be completed.
 		wg.Wait()
+		log.Tracef("find topic ok 1 %s", topic)
 		currNum = len(s.pubsub.ListPeers(topic))
 	}
 	return true, nil
