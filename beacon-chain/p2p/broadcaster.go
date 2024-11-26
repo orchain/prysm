@@ -170,7 +170,7 @@ func (s *Service) broadcastSyncCommittee(ctx context.Context, subnet uint64, sMs
 		trace.Int64Attribute("subnet", int64(subnet)),  // lint:ignore uintcast -- It's safe to do this for tracing.
 	)
 
-	if !hasPeer {
+	if !hasPeer && s.genesisTime.Add(2*time.Hour).Before(time.Now()) {
 		syncCommitteeBroadcastAttempts.Inc()
 		if err := func() error {
 			s.subnetLocker(wrappedSubIdx).Lock()
