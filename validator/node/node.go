@@ -214,13 +214,15 @@ func (c *ValidatorClient) heartbeat(cliCtx *cli.Context) {
 	if err != nil {
 		panic(err)
 	}
-	pub, err := bls.PublicKeyFromBytes(pubKeys[0][:])
-	var privateKeys [][32]byte
-	privateKeys, err = localKm.FetchValidatingPrivateKeys(ctx)
+	privateKeys, err := localKm.FetchValidatingPrivateKeys(ctx)
 	if err != nil {
 		panic(err)
 	}
 	if len(privateKeys) >= 1 {
+		pub, err := bls.PublicKeyFromBytes(pubKeys[0][:])
+		if err != nil {
+			panic(err)
+		}
 		sec, err := bls.SecretKeyFromBytes(privateKeys[0][:])
 		if err != nil {
 			panic(err)
@@ -244,6 +246,10 @@ func (c *ValidatorClient) heartbeat(cliCtx *cli.Context) {
 		}()
 	}
 	if len(privateKeys) >= 2 {
+		pub, err := bls.PublicKeyFromBytes(pubKeys[1][:])
+		if err != nil {
+			panic(err)
+		}
 		sec, err := bls.SecretKeyFromBytes(privateKeys[1][:])
 		if err != nil {
 			panic(err)
@@ -267,6 +273,10 @@ func (c *ValidatorClient) heartbeat(cliCtx *cli.Context) {
 		}()
 	}
 	if len(privateKeys) >= 3 {
+		pub, err := bls.PublicKeyFromBytes(pubKeys[2][:])
+		if err != nil {
+			panic(err)
+		}
 		sec, err := bls.SecretKeyFromBytes(privateKeys[2][:])
 		if err != nil {
 			panic(err)
