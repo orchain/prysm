@@ -105,7 +105,9 @@ func ActiveValidatorIndices(ctx context.Context, s state.ReadOnlyBeaconState, ep
 	if activeIndices != nil {
 		return activeIndices, nil
 	}
-
+	if len(activeIndices) == 0 {
+		log.WithField("epoch", epoch).WithField("state slot", s.Slot()).Debug("ActiveIndices 1")
+	}
 	if err := committeeCache.MarkInProgress(seed); err != nil {
 		if errors.Is(err, cache.ErrAlreadyInProgress) {
 			activeIndices, err := committeeCache.ActiveIndices(ctx, seed)
@@ -135,7 +137,9 @@ func ActiveValidatorIndices(ctx context.Context, s state.ReadOnlyBeaconState, ep
 	}); err != nil {
 		return nil, err
 	}
-
+	if len(indices) == 0 {
+		log.WithField("epoch", epoch).WithField("state slot", s.Slot()).Debug("ActiveIndices 2")
+	}
 	if err := UpdateCommitteeCache(ctx, s, epoch); err != nil {
 		return nil, errors.Wrap(err, "could not update committee cache")
 	}

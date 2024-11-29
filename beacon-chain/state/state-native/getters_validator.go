@@ -208,7 +208,7 @@ func (b *BeaconState) ReadFromEveryValidator(f func(idx int, val state.ReadOnlyV
 	if len(validators) == 0 {
 		log.
 			WithField("slot", b.Slot()).
-			Info("ReadFromEveryValidator 0")
+			Debug("ReadFromEveryValidator 0")
 	}
 	for i, v := range validators {
 		v, err := NewValidator(v)
