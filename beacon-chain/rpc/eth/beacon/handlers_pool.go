@@ -194,7 +194,7 @@ func (s *Server) ListVoluntaryExits(w http.ResponseWriter, r *http.Request) {
 func (s *Server) SubmitVoluntaryExit(w http.ResponseWriter, r *http.Request) {
 	ctx, span := trace.StartSpan(r.Context(), "beacon.SubmitVoluntaryExit")
 	defer span.End()
-
+	log.Info("SubmitVoluntaryExit beacon node")
 	var req shared.SignedVoluntaryExit
 	err := json.NewDecoder(r.Body).Decode(&req)
 	switch {

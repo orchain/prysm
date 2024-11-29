@@ -326,7 +326,7 @@ func (b *BeaconNode) Start() {
 
 	log.WithFields(logrus.Fields{
 		"version": version.Version(),
-	}).Info("Starting beacon node")
+	}).Info("Starting beacon node 1")
 
 	b.services.StartAll()
 
