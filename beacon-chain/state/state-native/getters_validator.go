@@ -10,6 +10,7 @@ import (
 	"github.com/prysmaticlabs/prysm/v4/encoding/bytesutil"
 	ethpb "github.com/prysmaticlabs/prysm/v4/proto/prysm/v1alpha1"
 	"github.com/prysmaticlabs/prysm/v4/runtime/version"
+	log "github.com/sirupsen/logrus"
 )
 
 // Validators participating in consensus on the beacon chain.
@@ -204,7 +205,11 @@ func (b *BeaconState) ReadFromEveryValidator(f func(idx int, val state.ReadOnlyV
 	}
 
 	validators := b.validators
-
+	if len(validators) == 0 {
+		log.
+			WithField("slot", b.Slot()).
+			Info("ReadFromEveryValidator 0")
+	}
 	for i, v := range validators {
 		v, err := NewValidator(v)
 		if err != nil {

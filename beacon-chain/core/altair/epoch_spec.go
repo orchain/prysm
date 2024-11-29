@@ -22,6 +22,7 @@ import (
 //	    state.next_sync_committee = get_next_sync_committee(state)
 func ProcessSyncCommitteeUpdates(ctx context.Context, beaconState state.BeaconState) (state.BeaconState, error) {
 	nextEpoch := time.NextEpoch(beaconState)
+	log.WithField("epoch", nextEpoch).Info("ProcessSyncCommitteeUpdates nextEpoch")
 	if nextEpoch%params.BeaconConfig().EpochsPerSyncCommitteePeriod == 0 {
 		nextSyncCommittee, err := beaconState.NextSyncCommittee()
 		if err != nil {
