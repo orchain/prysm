@@ -169,12 +169,14 @@ func (s *Service) broadcastSyncCommittee(ctx context.Context, subnet uint64, sMs
 		trace.Int64Attribute("slot", int64(sMsg.Slot)), // lint:ignore uintcast -- It's safe to do this for tracing.
 		trace.Int64Attribute("subnet", int64(subnet)),  // lint:ignore uintcast -- It's safe to do this for tracing.
 	)
-
+	log.Debugf("genesisTimePlusTwoHours:%v", s.genesisTime.Format("2006-01-02 15:04:05"))
+	log.Debugf("currentTime:%v", time.Now().Format("2006-01-02 15:04:05"))
 	if !hasPeer && s.genesisTime.Add(2*time.Hour).Before(time.Now()) {
 		syncCommitteeBroadcastAttempts.Inc()
 		if err := func() error {
 			s.subnetLocker(wrappedSubIdx).Lock()
 			defer s.subnetLocker(wrappedSubIdx).Unlock()
+			log.Debugf("currentTime 1:%v", time.Now().Format("2006-01-02 15:04:05"))
 			ok, err := s.FindPeersWithSubnet(ctx, syncCommitteeToTopic(subnet, forkDigest), subnet, 1)
 			if err != nil {
 				return err
