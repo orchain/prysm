@@ -273,6 +273,7 @@ func (s *Service) filterPeer(node *enode.Node) bool {
 	if node.IP() == nil {
 		return false
 	}
+	log.WithField("remote ip", node.IP()).WithField("remote node", node).WithField("my ip", s.dv5Listener.Self().IP()).Info("find node")
 	// do not dial nodes with their tcp ports not set
 	if err := node.Record().Load(enr.WithEntry("tcp", new(enr.TCP))); err != nil {
 		if !enr.IsNotFound(err) {
@@ -286,15 +287,19 @@ func (s *Service) filterPeer(node *enode.Node) bool {
 		return false
 	}
 	if s.peers.IsBad(peerData.ID) {
+		log.WithField("remote ip", node.IP()).WithField("remote node", node).WithField("my ip", s.dv5Listener.Self().IP()).Debug("find node IsBad")
 		return false
 	}
 	if s.peers.IsActive(peerData.ID) {
+		log.WithField("remote ip", node.IP()).WithField("remote node", node).WithField("my ip", s.dv5Listener.Self().IP()).Debug("find node IsActive")
 		return false
 	}
 	if s.host.Network().Connectedness(peerData.ID) == network.Connected {
+		log.WithField("remote ip", node.IP()).WithField("remote node", node).WithField("my ip", s.dv5Listener.Self().IP()).Debug("find node Connected")
 		return false
 	}
 	if !s.peers.IsReadyToDial(peerData.ID) {
+		log.WithField("remote ip", node.IP()).WithField("remote node", node).WithField("my ip", s.dv5Listener.Self().IP()).Debug("find node not IsReadyToDial")
 		return false
 	}
 	nodeENR := node.Record()
@@ -303,11 +308,14 @@ func (s *Service) filterPeer(node *enode.Node) bool {
 	if s.genesisValidatorsRoot != nil {
 		if err := s.compareForkENR(nodeENR); err != nil {
 			log.WithError(err).Trace("Fork ENR mismatches between peer and local node")
+			log.WithError(err).WithField("remote ip", node.IP()).WithField("remote node", node).WithField("my ip", s.dv5Listener.Self().IP()).Debug("find node not IsReadyToDial")
 			return false
 		}
 	}
+	log.WithField("remote ip", node.IP()).WithField("remote node", node).WithField("my ip", s.dv5Listener.Self().IP()).Info("add node to peer")
 	// Add peer to peer handler.
 	s.peers.Add(nodeENR, peerData.ID, multiAddr, network.DirUnknown)
+	log.WithField("remote ip", node.IP()).WithField("remote node", node).WithField("my ip", s.dv5Listener.Self().IP()).Info("add node to peer success")
 	return true
 }
 
