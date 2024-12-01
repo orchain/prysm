@@ -91,9 +91,25 @@ func (s *Service) RefreshENR() {
 // listen for new nodes watches for new nodes in the network and adds them to the peerstore.
 func (s *Service) listenForNewNodes() {
 	iterator := s.dv5Listener.RandomNodes()
+	pv5 := s.dv5Listener.(*discover.UDPv5)
 	iterator = enode.Filter(iterator, s.filterPeer)
 	defer iterator.Close()
 	for {
+		calculateDistanceAndIndex := func(nodeA, nodeB *enode.Node) {
+			dist := enode.LogDist(nodeA.ID(), nodeB.ID())
+			tableIndex := 0
+			if dist <= 239 {
+				tableIndex = 0
+			} else {
+				tableIndex = dist - 239 - 1
+			}
+			log.Info("%s -> %s: Distance = %d, Table Index = %d\n", nodeA.IP(), nodeB.IP(), dist, tableIndex)
+		}
+		for _, node := range pv5.AllNodes() {
+			log.WithField("remote ip", node.IP()).WithField("remote node", node).WithField("my ip", s.dv5Listener.Self().IP()).Info("find node")
+			calculateDistanceAndIndex(pv5.LocalNode().Node(), node)
+		}
+
 		// Exit if service's context is canceled
 		if s.ctx.Err() != nil {
 			break
@@ -156,12 +172,12 @@ func (s *Service) createListener(
 	}
 	// Listen to all network interfaces
 	// for both ip protocols.
-	networkVersion := "udp"
+	networkVersion := "udp4"
 	conn, err := net.ListenUDP(networkVersion, udpAddr)
 	if err != nil {
 		return nil, errors.Wrap(err, "could not listen to UDP")
 	}
-
+	log.WithField("udpAddr", udpAddr).Info("start discovery listener")
 	localNode, err := s.createLocalNode(
 		privKey,
 		ipAddr,
