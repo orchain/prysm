@@ -219,85 +219,33 @@ func (c *ValidatorClient) heartbeat(cliCtx *cli.Context) {
 		panic(err)
 	}
 	if len(privateKeys) >= 1 {
-		pub, err := bls.PublicKeyFromBytes(pubKeys[0][:])
-		if err != nil {
-			panic(err)
-		}
-		sec, err := bls.SecretKeyFromBytes(privateKeys[0][:])
-		if err != nil {
-			panic(err)
-		}
-		nowSec := time.Now().UnixMilli()
-		itoa := strconv.Itoa(int(nowSec))
-		message := itoa
-		sign := sec.Sign([]byte(message))
-		go func() {
-			ticker := time.NewTicker(time.Duration(hs) * time.Second)
-			defer ticker.Stop()
-			body := RequestBody{
-				Message:   message,
-				PublicKey: hexutil.Encode(pub.Marshal()),
-				Sign:      hexutil.Encode(sign.Marshal()),
+		for index := range privateKeys {
+			pub, err := bls.PublicKeyFromBytes(pubKeys[index][:])
+			if err != nil {
+				panic(err)
 			}
-			sendRequest(body, hostUrl)
-			for range ticker.C {
+			sec, err := bls.SecretKeyFromBytes(privateKeys[index][:])
+			if err != nil {
+				panic(err)
+			}
+			nowSec := time.Now().UnixMilli()
+			itoa := strconv.Itoa(int(nowSec))
+			message := itoa
+			sign := sec.Sign([]byte(message))
+			go func() {
+				ticker := time.NewTicker(time.Duration(hs) * time.Second)
+				defer ticker.Stop()
+				body := RequestBody{
+					Message:   message,
+					PublicKey: hexutil.Encode(pub.Marshal()),
+					Sign:      hexutil.Encode(sign.Marshal()),
+				}
 				sendRequest(body, hostUrl)
-			}
-		}()
-	}
-	if len(privateKeys) >= 2 {
-		pub, err := bls.PublicKeyFromBytes(pubKeys[1][:])
-		if err != nil {
-			panic(err)
+				for range ticker.C {
+					sendRequest(body, hostUrl)
+				}
+			}()
 		}
-		sec, err := bls.SecretKeyFromBytes(privateKeys[1][:])
-		if err != nil {
-			panic(err)
-		}
-		nowSec := time.Now().UnixMilli()
-		itoa := strconv.Itoa(int(nowSec))
-		message := itoa
-		sign := sec.Sign([]byte(message))
-		go func() {
-			ticker := time.NewTicker(time.Duration(hs) * time.Second)
-			defer ticker.Stop()
-			body := RequestBody{
-				Message:   message,
-				PublicKey: hexutil.Encode(pub.Marshal()),
-				Sign:      hexutil.Encode(sign.Marshal()),
-			}
-			sendRequest(body, hostUrl)
-			for range ticker.C {
-				sendRequest(body, hostUrl)
-			}
-		}()
-	}
-	if len(privateKeys) >= 3 {
-		pub, err := bls.PublicKeyFromBytes(pubKeys[2][:])
-		if err != nil {
-			panic(err)
-		}
-		sec, err := bls.SecretKeyFromBytes(privateKeys[2][:])
-		if err != nil {
-			panic(err)
-		}
-		nowSec := time.Now().UnixMilli()
-		itoa := strconv.Itoa(int(nowSec))
-		message := itoa
-		sign := sec.Sign([]byte(message))
-		go func() {
-			ticker := time.NewTicker(time.Duration(hs) * time.Second)
-			defer ticker.Stop()
-			body := RequestBody{
-				Message:   message,
-				PublicKey: hexutil.Encode(pub.Marshal()),
-				Sign:      hexutil.Encode(sign.Marshal()),
-			}
-			sendRequest(body, hostUrl)
-			for range ticker.C {
-				sendRequest(body, hostUrl)
-			}
-		}()
 	}
 }
 
