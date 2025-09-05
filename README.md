@@ -11,7 +11,7 @@ This is the core repository for Prysm, a [Golang](https://golang.org/) implement
 
 ### Getting Started
 
-A detailed set of installation and usage instructions as well as breakdowns of each individual component are available in the [official documentation portal](https://docs.prylabs.network). If you still have questions, feel free to stop by our [Discord](https://discord.gg/prysmaticlabs).
+A detailed set of installation and usage instructions as well as breakdowns of each individual component are available in the [official documentation portal](https://prysm.offchainlabs.com/docs/). If you still have questions, feel free to stop by our [Discord](https://discord.gg/prysmaticlabs).
 
 ### Staking on Mainnet
 
@@ -26,7 +26,7 @@ Prysm maintains two permanent branches:
 * [develop](https://github.com/prysmaticlabs/prysm/tree/develop): This is used for development, it contains the latest PRs. Developers should base their PRs on this branch.
 
 ### Guide
-Want to get involved? Check out our [Contribution Guide](https://docs.prylabs.network/docs/contribute/contribution-guidelines/) to learn more!
+Want to get involved? Check out our [Contribution Guide](https://prysm.offchainlabs.com/docs/contribute/contribution-guidelines/) to learn more!
 
 ## License
 

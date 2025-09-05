@@ -237,7 +237,7 @@ if [[ $1 == client-stats ]]; then
 fi
 
 if [[ $1 == slasher ]]; then
-    color "41" "The slasher binary is no longer available. Please use the --slasher flag with your beacon node. See: https://docs.prylabs.network/docs/prysm-usage/slasher/"
+    color "41" "The slasher binary is no longer available. Please use the --slasher flag with your beacon node. See: https://prysm.offchainlabs.com/docs/configure-prysm/slasher/"
     exit 1
 fi
 

@@ -1,6 +1,6 @@
 # Contribution Guidelines
 
-Note: The latest and most up-to-date documentation can be found on our [docs portal](https://docs.prylabs.network/docs/contribute/contribution-guidelines).
+Note: The latest and most up-to-date documentation can be found on our [docs portal](https://prysm.offchainlabs.com/docs/contribute/contribution-guidelines/).
 
 Excited by our work and want to get involved in building out our sharding releases? Or maybe you haven't learned as much about the Ethereum protocol but are a savvy developer? 
 
