@@ -2,10 +2,6 @@ package node
 
 import (
 	"encoding/json"
-	"io"
-	"net/http"
-	"strings"
-
 	corenet "github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/pkg/errors"
@@ -14,6 +10,9 @@ import (
 	"github.com/prysmaticlabs/prysm/v4/beacon-chain/p2p/peers/peerdata"
 	http2 "github.com/prysmaticlabs/prysm/v4/network/http"
 	eth "github.com/prysmaticlabs/prysm/v4/proto/prysm/v1alpha1"
+	log "github.com/sirupsen/logrus"
+	"io"
+	"net/http"
 )
 
 // ListTrustedPeer retrieves data about the node's trusted peers.
@@ -44,6 +43,16 @@ func (s *Server) ListTrustedPeer(w http.ResponseWriter, r *http.Request) {
 		allPeers = append(allPeers, p)
 	}
 	response := &PeersResponse{Peers: allPeers}
+	http2.WriteJson(w, response)
+}
+func (s *Server) BlackPeers(w http.ResponseWriter, r *http.Request) {
+	response := struct {
+		Ips []string `json:"ips"`
+		Ids []string `json:"ids"`
+	}{
+		Ips: peers.BlackList.GetIpAll(),
+		Ids: peers.BlackList.GetIdAll(),
+	}
 	http2.WriteJson(w, response)
 }
 
@@ -92,10 +101,24 @@ func (s *Server) AddTrustedPeer(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 }
 
+func (s *Server) AddBlackPeer(w http.ResponseWriter, r *http.Request) {
+	ip := r.URL.Query().Get("ip")
+	id := r.URL.Query().Get("id")
+	peers.BlackList.Add(ip, id)
+	w.WriteHeader(http.StatusOK)
+}
+
+// AddTrustedPeer adds a new peer into node's trusted peer set by Multiaddr
+func (s *Server) RemoveBlackPeer(w http.ResponseWriter, r *http.Request) {
+	ip := r.URL.Query().Get("ip")
+	id := r.URL.Query().Get("id")
+	peers.BlackList.Remove(ip, id)
+	w.WriteHeader(http.StatusOK)
+}
+
 // RemoveTrustedPeer removes peer from our trusted peer set but does not close connection.
 func (s *Server) RemoveTrustedPeer(w http.ResponseWriter, r *http.Request) {
-	segments := strings.Split(r.URL.Path, "/")
-	id := segments[len(segments)-1]
+	id := r.URL.Query().Get("id")
 	peerId, err := peer.Decode(id)
 	if err != nil {
 		errJson := &http2.DefaultErrorJson{
@@ -104,6 +127,10 @@ func (s *Server) RemoveTrustedPeer(w http.ResponseWriter, r *http.Request) {
 		}
 		http2.WriteError(w, errJson)
 		return
+	}
+	err = s.PeerManager.Disconnect(peerId)
+	if err != nil {
+		log.Errorf("remove error %v,peerId %v", err, peerId)
 	}
 
 	// if the peer is not a trusted peer, do nothing but return 200
