@@ -626,7 +626,6 @@ func (p *Status) PruneALL() {
 			})
 		}
 	}
-
 	// Sort peers in descending order, so the peers with the
 	// highest score are pruned first. This
 	// is to protect the node from malicious/lousy peers so
@@ -638,9 +637,8 @@ func (p *Status) PruneALL() {
 	limitDiff := len(p.store.Peers()) - p.store.Config().MaxPeers
 	if limitDiff > len(peersToPrune) {
 		limitDiff = len(peersToPrune)
+		peersToPrune = peersToPrune[:limitDiff]
 	}
-
-	peersToPrune = peersToPrune[:limitDiff]
 
 	// Delete peers from map.
 	for _, peerData := range peersToPrune {
