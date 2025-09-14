@@ -30,7 +30,7 @@ var (
 		"merge, you will need to connect to your " +
 		"execution client on port 8551 rather than 8545. This is known as the 'engine API' port and needs to be " +
 		"authenticated if connecting via HTTP. See our documentation on how to set up this up here " +
-		"https://docs.prylabs.network/docs/execution-node/authentication"
+		"https://prysm.offchainlabs.com/docs/configure-prysm/authentication/"
 )
 
 // Checks the transition configuration between Prysm and the connected execution node to ensure
