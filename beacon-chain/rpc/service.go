@@ -363,6 +363,7 @@ func (s *Service) Start() {
 		ExecutionChainInfoFetcher: s.cfg.ExecutionChainInfoFetcher,
 	}
 
+	s.cfg.Router.HandleFunc("/prysm/node/prune_all", nodeServerPrysm.PruneALL).Methods(http.MethodPost)
 	s.cfg.Router.HandleFunc("/prysm/node/trusted_peers", nodeServerPrysm.ListTrustedPeer).Methods(http.MethodGet)
 	s.cfg.Router.HandleFunc("/prysm/node/remove_trusted_peers", nodeServerPrysm.RemoveTrustedPeer).Methods(http.MethodPost)
 	s.cfg.Router.HandleFunc("/prysm/node/add_trusted_peers", nodeServerPrysm.AddTrustedPeer).Methods(http.MethodPost)
