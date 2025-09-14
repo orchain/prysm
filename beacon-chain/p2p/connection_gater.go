@@ -1,15 +1,14 @@
 package p2p
 
 import (
-	"net"
-	"runtime"
-
 	"github.com/libp2p/go-libp2p/core/control"
 	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/multiformats/go-multiaddr"
 	manet "github.com/multiformats/go-multiaddr/net"
 	"github.com/sirupsen/logrus"
+	"net"
+	"runtime"
 )
 
 const (

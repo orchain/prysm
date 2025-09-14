@@ -26,6 +26,7 @@ import (
 	"context"
 	"math"
 	"sort"
+	"sync"
 	"time"
 
 	"github.com/ethereum/go-ethereum/p2p/enr"
@@ -339,7 +340,7 @@ func (p *Status) isBad(pid peer.ID) bool {
 	if p.store.IsTrustedPeer(pid) {
 		return false
 	}
-	return p.isfromBadIP(pid) || p.scorers.IsBadPeerNoLock(pid)
+	return p.isfromBadIP(pid) || p.scorers.IsBadPeerNoLock(pid) || p.isfromBlack(pid)
 }
 
 // NextValidTime gets the earliest possible time it is to contact/dial
@@ -1035,4 +1036,95 @@ func indicesFromBitfield(bitV bitfield.Bitvector64) []uint64 {
 		}
 	}
 	return committeeIdxs
+}
+
+type BlackListCfg struct {
+	sync.RWMutex
+	ipCache map[string]struct{}
+	idCache map[string]struct{}
+}
+
+var BlackList = &BlackListCfg{
+	ipCache: make(map[string]struct{}),
+	idCache: make(map[string]struct{}),
+}
+
+func (b *BlackListCfg) Add(ip string, id string) {
+	b.Lock()
+	defer b.Unlock()
+	if ip != "" {
+		b.ipCache[ip] = struct{}{}
+	}
+	if id != "" {
+		b.idCache[id] = struct{}{}
+	}
+	return
+}
+
+func (b *BlackListCfg) Remove(ip string, id string) {
+	b.Lock()
+	defer b.Unlock()
+
+	delete(b.ipCache, ip)
+	delete(b.idCache, id)
+	return
+}
+
+func (b *BlackListCfg) ContainsIp(ip string) bool {
+	b.RLock()
+	defer b.RUnlock()
+	_, exists := b.ipCache[ip]
+	return exists
+}
+func (b *BlackListCfg) ContainsId(id string) bool {
+	b.RLock()
+	defer b.RUnlock()
+	_, exists := b.idCache[id]
+	return exists
+}
+
+func (b *BlackListCfg) GetIpAll() []string {
+	b.RLock()
+	defer b.RUnlock()
+	ips := make([]string, 0, len(b.ipCache))
+	for ip := range b.ipCache {
+		ips = append(ips, ip)
+	}
+	return ips
+}
+
+func (b *BlackListCfg) GetIdAll() []string {
+	b.RLock()
+	defer b.RUnlock()
+	ids := make([]string, 0, len(b.idCache))
+	for id := range b.idCache {
+		ids = append(ids, id)
+	}
+	return ids
+}
+
+func (p *Status) isfromBlack(pid peer.ID) bool {
+	peerData, ok := p.store.PeerData(pid)
+	if !ok {
+		return false
+	}
+	if peerData.Address == nil {
+		return false
+	}
+	ip, err := manet.ToIP(peerData.Address)
+	if err != nil {
+		return true
+	}
+
+	if BlackList.ContainsIp(ip.String()) {
+		log.Debugf("black ip peer")
+		return true
+	}
+
+	if BlackList.ContainsId(pid.String()) {
+		log.Debugf("black id peer")
+		return true
+	}
+
+	return false
 }
