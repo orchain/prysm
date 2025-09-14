@@ -55,6 +55,10 @@ func (s *Server) BlackPeers(w http.ResponseWriter, r *http.Request) {
 	}
 	http2.WriteJson(w, response)
 }
+func (s *Server) PruneALL(w http.ResponseWriter, r *http.Request) {
+	s.PeersFetcher.Peers().PruneALL()
+	w.WriteHeader(http.StatusOK)
+}
 
 // AddTrustedPeer adds a new peer into node's trusted peer set by Multiaddr
 func (s *Server) AddTrustedPeer(w http.ResponseWriter, r *http.Request) {

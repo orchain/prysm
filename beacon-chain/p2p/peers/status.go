@@ -601,6 +601,53 @@ func (p *Status) Prune() {
 	}
 	p.tallyIPTracker()
 }
+func (p *Status) PruneALL() {
+	p.store.Lock()
+	defer p.store.Unlock()
+
+	notBadPeer := func(pid peer.ID) bool {
+		return !p.isBad(pid)
+	}
+	notTrustedPeer := func(pid peer.ID) bool {
+		return !p.isTrustedPeers(pid)
+	}
+	type peerResp struct {
+		pid   peer.ID
+		score float64
+	}
+	peersToPrune := make([]*peerResp, 0)
+	// Select disconnected peers with a smaller bad response count.
+	for pid, peerData := range p.store.Peers() {
+		// Should not prune trusted peer or prune the peer dara and unset trusted peer.
+		if peerData.ConnState == PeerDisconnected && notBadPeer(pid) && notTrustedPeer(pid) {
+			peersToPrune = append(peersToPrune, &peerResp{
+				pid:   pid,
+				score: p.Scorers().ScoreNoLock(pid),
+			})
+		}
+	}
+
+	// Sort peers in descending order, so the peers with the
+	// highest score are pruned first. This
+	// is to protect the node from malicious/lousy peers so
+	// that their memory is still kept.
+	sort.Slice(peersToPrune, func(i, j int) bool {
+		return peersToPrune[i].score > peersToPrune[j].score
+	})
+
+	limitDiff := len(p.store.Peers()) - p.store.Config().MaxPeers
+	if limitDiff > len(peersToPrune) {
+		limitDiff = len(peersToPrune)
+	}
+
+	peersToPrune = peersToPrune[:limitDiff]
+
+	// Delete peers from map.
+	for _, peerData := range peersToPrune {
+		p.store.DeletePeerData(peerData.pid)
+	}
+	p.tallyIPTracker()
+}
 
 // Deprecated: This is the old peer pruning method based on
 // bad response counts.
